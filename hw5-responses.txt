@@ -1,0 +1,35 @@
+5.1) I created a table in hive and hbase using the flight data. The quries i used
+are below and the code changes I made are in app.js
+
+CREATE TABLE grlewis_hw51_delay_by_origin_year
+STORED AS ORC AS
+SELECT
+    f.year AS year,
+    s.name AS airport_code,
+    COUNT(*) AS total_flights,
+    AVG(clear_delay) AS clear_delays,
+    AVG(fog_delay) AS fog_delays,
+    AVG(rain_delay) AS rain_delays,
+    AVG(snow_delay) AS snow_delays,
+    AVG(hail_delay) AS hail_delays,
+    AVG(thunder_delay) AS thunder_delays,
+    AVG(tornado_delay) AS tornado_delays
+FROM flights_and_weather f
+JOIN stations s
+  ON f.origin_code = s.code
+GROUP BY f.year, s.name;
+
+INSERT OVERWRITE TABLE grlewis_hw51_delay_by_origin_year_hb
+SELECT
+    concat_ws('_', CAST(year AS STRING), airport_code) AS origin_year,
+    map(
+        'clear_delays', clear_delays,
+        'fog_delays', fog_delays,
+        'rain_delays', rain_delays,
+        'snow_delays', snow_delays,
+        'hail_delays', hail_delays,
+        'thunder_delays', thunder_delays,
+        'tornado_delays', tornado_delays
+    )
+FROM grlewis_hw51_delay_by_origin_year;
+
