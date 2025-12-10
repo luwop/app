@@ -2,31 +2,42 @@
 <html>
 <head>
     <title>{{card_name}} — Card Analytics</title>
-    <link rel="stylesheet" href="table.css" />
+    <link rel="stylesheet" href="/table.css" />
 </head>
 
 <body>
-<h1 style="text-align:center;">📊 {{card_name}} Analytics</h1>
+<h1 style="text-align:center;">{{card_name}} Analytics</h1>
 
 <div style="width:60%;margin:auto;">
+
     <h3>Overall Performance</h3>
     <table class="CSS_Table_Example">
         <tr><td>Card Name</td><td>{{card_name}}</td></tr>
         <tr><td>Card ID</td><td>{{card_id}}</td></tr>
         <tr><td>Total Battles Used</td><td>{{usage}}</td></tr>
-        <tr><td>Total Wins</td><td>{{wins}}</td></tr>
         <tr><td>Win Rate</td><td>{{win_rate}}%</td></tr>
     </table>
 
     <br>
 
-    <h3>Top Partner Cards</h3>
+    <h3>Top Synergy Cards</h3>
     <table class="CSS_Table_Example">
-        <tr><td>Card</td>
+        <tr>
+            <th>Card</th>
+            <th>Win Rate</th>
+            <th>Synergy Cards</th>
+        </tr>
+
         {{#partners}}
-            <tr>
-                <td>{{name}}</td>
-            </tr>
+        <tr>
+            <td>{{name}}</td>
+            <td>{{win_rate}}%</td>
+            <td>
+                {{#synergy_list}}
+                    {{.}}<br>
+                {{/synergy_list}}
+            </td>
+        </tr>
         {{/partners}}
     </table>
 
@@ -34,13 +45,25 @@
 
     <h3>Top Opposing Cards</h3>
     <table class="CSS_Table_Example">
-        <tr><td>Card</td></tr>
+        <tr>
+            <th>Card</th>
+            <th>Win Rate</th>
+            <th>Counter Cards</th>
+        </tr>
+
         {{#opponents}}
-            <tr>
-                <td>{{name}}</td>
-            </tr>
+        <tr>
+            <td>{{name}}</td>
+            <td>{{win_rate}}%</td>
+            <td>
+                {{#counter_list}}
+                    {{.}}<br>
+                {{/counter_list}}
+            </td>
+        </tr>
         {{/opponents}}
     </table>
+
 </div>
 </body>
 </html>

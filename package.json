@@ -14,6 +14,7 @@
     "hbase": "^0.6.1",
     "hbase-rpc-client": "^0.1.15",
     "kafka-node": "^5.0.0",
+    "kafkajs": "^2.2.4",
     "mustache": "^4.0.1",
     "node-zookeeper-client": "^1.1.0"
   }
