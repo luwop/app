@@ -149,6 +149,44 @@ app.get('/stats.html', function (req, res) {
     });
 });
 
+app.get("/recommend.html", function (req, res) {
+    const cardId = req.query["card_id"];
+    if (!cardId) return res.send("<h2>No card ID provided!</h2>");
+
+    hclient.table("grlewis_recommended_decks_hb")
+        .row(cardId)
+        .get(function (err, cells) {
+
+            if (err) return res.status(500).send("HBase read error.");
+            if (!cells || cells.length === 0)
+                return res.send(`<h2>No recommended deck data for card ${cardId}</h2>`);
+
+            let deck1 = [];
+
+            const raw = cells.find(c => c.column === "rec:deck1")?.["$"];
+            if (raw) {
+                try {
+                    deck1 = JSON.parse(decodeString(raw));
+                } catch (e) {
+                    deck1 = [];
+                }
+            }
+
+            const context = {
+                card_id: cardId,
+                card_name: CARD_NAME[cardId] || "Unknown Card",
+                deck1: deck1.map(id => CARD_NAME[id] || id)
+            };
+
+            const template = filesystem
+                .readFileSync("views/recommend.mustache")
+                .toString();
+
+            const html = mustache.render(template, context);
+            res.send(html);
+        });
+});
+
 const kafka = new Kafka({
     clientId: "clash-producer",
     brokers: ["boot-public-byg.mpcs53014kafka.2siu49.c2.kafka.us-east-1.amazonaws.com:9196"],
