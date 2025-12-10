@@ -1,0 +1,18 @@
+<h2>Deck Analysis</h2>
+
+<p><strong>Total Battles:</strong> {{count}}</p>
+<p><strong>Win Rate:</strong> {{win_rate}}%</p>
+
+<h3>Most Common Opponent Decks</h3>
+<ul>
+{{#top_opponents}}
+<li>{{deck}} — {{wins}} wins</li>
+{{/top_opponents}}
+</ul>
+
+<h3>Deck Breakdown</h3>
+<ul>
+{{#cards}}
+<li>{{name}} — Usage {{usage}}, Win % {{win_pct}}</li>
+{{/cards}}
+</ul>

@@ -1,0 +1,210 @@
+<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html>
+<head>
+    <title>Clash Royale Deck Analyzer</title>
+    <link type="text/css" rel="stylesheet" href="elegant-aero.css" />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: url("clash.jpg") center/cover no-repeat fixed;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Soft overlay to improve readability */
+        .overlay {
+            min-height: 100vh;
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+
+        .title-banner {
+            width: 55%;
+            margin: 0 auto 20px auto;
+            padding: 15px;
+            text-align: center;
+            font-size: 26px;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.45);
+            font-weight: bold;
+        }
+
+        /* Grid of 8 selectors: 4 per row */
+        .card-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            width: 90%;
+            margin: 0 auto;
+        }
+
+        .card-grid .card-slot {
+            width: 48%;        /* 2 per row on mobile */
+            margin-bottom: 12px;
+        }
+
+        @media (min-width: 720px) {
+            .card-grid .card-slot {
+                width: 22%;      /* 4 per row on desktop */
+            }
+        }
+
+        select {
+            width: 100% !important;
+        }
+
+        iframe {
+            display: block;
+            width: 75%;
+            height: 480px;
+            margin: 40px auto;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+<div class="overlay">
+    <div class="title-banner">
+        ⚔️ Clash Royale Deck Analyzer ⚔️<br>
+        <span style="font-size:14px;">Choose 8 cards to analyze win rate & performance</span>
+    </div>
+
+    <form action="/analyze.html"
+          method="get"
+          target="results_iframe"
+          class="elegant-aero"
+          style="width:500px;margin:0 auto;background:white;padding:20px;">
+
+        <h2 style="text-align:center;margin-bottom:20px;">Select Your 8 Cards</h2>
+
+        <div class="card-grid">
+
+            <!-- Generate 8 identical selectors -->
+            <!-- CARD 1 -->
+            <div class="card-slot">
+                <label>
+                    <span>Card 1:</span>
+                    <select name="card1">
+                        <option value="">-- Select Card --</option>
+                        <option>Hog Rider</option>
+                        <option>Musketeer</option>
+                        <option>Fireball</option>
+                        <option>Cannon</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- CARD 2 -->
+            <div class="card-slot">
+                <label>
+                    <span>Card 2:</span>
+                    <select name="card2">
+                        <option value="">-- Select Card --</option>
+                        <option>Hog Rider</option>
+                        <option>Musketeer</option>
+                        <option>Fireball</option>
+                        <option>Cannon</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- CARD 3 -->
+            <div class="card-slot">
+                <label>
+                    <span>Card 3:</span>
+                    <select name="card3">
+                        <option value="">-- Select Card --</option>
+                        <option>Hog Rider</option>
+                        <option>Musketeer</option>
+                        <option>Fireball</option>
+                        <option>Cannon</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- CARD 4 -->
+            <div class="card-slot">
+                <label>
+                    <span>Card 4:</span>
+                    <select name="card4">
+                        <option value="">-- Select Card --</option>
+                        <option>Hog Rider</option>
+                        <option>Musketeer</option>
+                        <option>Fireball</option>
+                        <option>Cannon</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- CARD 5 -->
+            <div class="card-slot">
+                <label>
+                    <span>Card 5:</span>
+                    <select name="card5">
+                        <option value="">-- Select Card --</option>
+                        <option>Hog Rider</option>
+                        <option>Musketeer</option>
+                        <option>Fireball</option>
+                        <option>Cannon</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- CARD 6 -->
+            <div class="card-slot">
+                <label>
+                    <span>Card 6:</span>
+                    <select name="card6">
+                        <option value="">-- Select Card --</option>
+                        <option>Hog Rider</option>
+                        <option>Musketeer</option>
+                        <option>Fireball</option>
+                        <option>Cannon</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- CARD 7 -->
+            <div class="card-slot">
+                <label>
+                    <span>Card 7:</span>
+                    <select name="card7">
+                        <option value="">-- Select Card --</option>
+                        <option>Hog Rider</option>
+                        <option>Musketeer</option>
+                        <option>Fireball</option>
+                        <option>Cannon</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- CARD 8 -->
+            <div class="card-slot">
+                <label>
+                    <span>Card 8:</span>
+                    <select name="card8">
+                        <option value="">-- Select Card --</option>
+                        <option>Hog Rider</option>
+                        <option>Musketeer</option>
+                        <option>Fireball</option>
+                        <option>Cannon</option>
+                    </select>
+                </label>
+            </div>
+
+        </div>
+
+        <label>
+            <span></span>
+            <input type="submit" value="Analyze Deck" class="button">
+        </label>
+    </form>
+
+    <iframe name="results_iframe"></iframe>
+
+</div>
+</body>
+</html>

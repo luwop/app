@@ -1,17 +1,21 @@
 'use strict';
 const http = require('http');
-var assert = require('assert');
 const express = require('express');
 const app = express();
 const mustache = require('mustache');
 const filesystem = require('fs');
 require('dotenv').config();
-const port = Number(process.argv[2]);
 const hbase = require('hbase');
 
+const port = Number(process.argv[2]);
 const url = new URL(process.argv[3]);
-console.log(url);
-var hclient = hbase({
+
+console.log("Connecting to HBase:", url);
+
+// -----------------------------
+// HBASE CLIENT
+// -----------------------------
+const hclient = hbase({
     host: url.hostname,
     path: url.pathname ?? "/",
     port: url.port,
@@ -19,59 +23,122 @@ var hclient = hbase({
     encoding: 'latin1'
 });
 
-function counterToNumber(c) {
-    const str = Buffer.from(c, 'latin1').toString().trim();
-    const num = Number(str);
-    return isNaN(num) ? 0 : num;
+// -----------------------------
+// LOAD CARD NAMES
+// -----------------------------
+const cardData = JSON.parse(
+    filesystem.readFileSync("./data/cards.json").toString()
+);
+
+// Make a dictionary: id → name
+const CARD_NAME = {};
+cardData.forEach(c => {
+    CARD_NAME[String(c.id)] = c.name;
+});
+
+// -----------------------------
+// HELPERS
+// -----------------------------
+function decodeString(c) {
+    if (!c) return "";
+    return Buffer.from(c, 'latin1').toString().trim();
 }
 
-function rowToMap(row) {
-    var stats = {};
-    row.forEach(function (item) {
-        stats[item['column']] = counterToNumber(item['$']);
+function decodeNumber(c) {
+    if (!c) return 0;
+    const s = decodeString(c);
+    const n = Number(s);
+    return isNaN(n) ? 0 : n;
+}
+
+function rowToStats(cells) {
+    let stats = {};
+
+    cells.forEach(col => {
+        const q = col.column;
+        const val = col["$"];
+
+        if (q.startsWith("stats:")) stats[q.replace("stats:", "")] = decodeNumber(val);
+        else if (q.startsWith("rel:")) stats[q.replace("rel:", "")] = decodeString(val);
+        else stats[q] = decodeString(val);
     });
+
     return stats;
 }
 
+// -----------------------------
+// STATIC FILES
+// -----------------------------
 app.use(express.static('public'));
 
-app.get('/delays.html', function (req, res) {
-    const origin = req.query['origin'];
-    const year = req.query['year'];
-    const key = `${year}_${origin}`;
-    console.log("Key entered:", key);
-    hclient.table('grlewis_hw51_delay_by_origin_year_hb').row(key).get(function (err, cells) {
-        if (err) {
-            console.error(err);
-            return res.status(500).send("Error querying HBase.");
-        }
-        if (!cells || cells.length === 0) {
-            console.log(`No data found for ${key}`);
-            return res.send(`<h2>No data found for ${origin} in ${year}</h2>`);
-        }
-        const weatherInfo = rowToMap(cells);
-        console.log(weatherInfo);
-        function weather_delay(weather) {
-            var delays = weatherInfo["delay:" + weather + "_delays"];
-            if (delays === undefined || delays === 0) return " - ";
-            return delays.toFixed(1);
-        }
-        var template = filesystem.readFileSync("result.mustache").toString();
-        var html = mustache.render(template, {
-            origin: origin,
-            year: year,
-            clear_dly: weather_delay("clear"),
-            fog_dly: weather_delay("fog"),
-            rain_dly: weather_delay("rain"),
-            snow_dly: weather_delay("snow"),
-            hail_dly: weather_delay("hail"),
-            thunder_dly: weather_delay("thunder"),
-            tornado_dly: weather_delay("tornado")
+// -----------------------------
+// CARD ANALYTICS ENDPOINT
+// -----------------------------
+app.get('/stats.html', function (req, res) {
+    const cardId = req.query['card_id'];
+
+    if (!cardId) return res.send("<h2>No card ID provided!</h2>");
+
+    console.log("Fetching Card:", cardId);
+
+    hclient.table('grlewis_card_stats_hb')
+        .row(cardId)
+        .get(function (err, cells) {
+
+            if (err) {
+                console.error(err);
+                return res.status(500).send("Error querying HBase.");
+            }
+
+            if (!cells || cells.length === 0) {
+                return res.send(`<h2>No data found for card ${cardId}</h2>`);
+            }
+
+            const info = rowToStats(cells);
+
+            // -----------------------------
+            // MAP IDs → NAMES
+            // -----------------------------
+            const partners = [
+                info.top_synergy_1,
+                info.top_synergy_2,
+                info.top_synergy_3
+            ].filter(x => x).map(id => ({
+                name: CARD_NAME[id] || id,
+                count: "" // no count available yet
+            }));
+
+            const opponents = [
+                info.top_counter_1,
+                info.top_counter_2,
+                info.top_counter_3
+            ].filter(x => x).map(id => ({
+                name: CARD_NAME[id] || id,
+                count: "" // no count available yet
+            }));
+
+            // -----------------------------
+            // MUSTACHE CONTEXT
+            // -----------------------------
+            const context = {
+                card_id: cardId,
+                card_name: info.card_name || CARD_NAME[cardId] || "Unknown Card",
+                usage: info.total_appearances,
+                wins: info.winner_appearances,
+                win_rate: (info.win_rate * 100).toFixed(2),
+                partners,
+                opponents
+            };
+
+            const template = filesystem.readFileSync("views/card_results.mustache").toString();
+            const html = mustache.render(template, context);
+            res.send(html);
         });
-        res.send(html);
-    });
 });
 
+// -----------------------------
+// START SERVER
+// -----------------------------
 app.listen(port, () => {
-    console.log(`Listening on port ${port}`);
+    console.log(`Card Stats WebApp running on port ${port}`);
 });
