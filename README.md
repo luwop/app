@@ -1,3 +1,60 @@
+# Final Project
+
+All components of my Clash Royale Big Data Analytics System are deployed across the two course servers. Below is a clear guide to where every part of the project is located.
+
+- Repo Link: https://github.com/luwop/app
+---
+
+## Hadoop / EMR Cluster (Batch and Speed Layer)
+
+All Hive, HBase, and Spark scripts — including:
+
+- Hive table creation `.hql` files
+- ORC table creation scripts
+- Batch aggregation jobs
+- HBase schema and loading scripts
+- Machine learning deck recommender (`DeckRecommender.scala`)
+- Spark Streaming job and JAR for ingesting Kafka events
+- Supporting datasets and logs
+
+are stored in my directory: **/home/hadoop/grlewis/**
+
+TThis folder contains all ETL code, analytics scripts, machine learning logic, and the speed-layer streaming code.
+
+---
+
+## Web Server (Application Layer)
+
+The complete Node.js application, including:
+
+- Express web server
+- Kafka producer for match submissions
+- Mustache templates
+- Static HTML, CSS, and JavaScript files (including `index.html` and `match.html`)
+
+is located on the web server at: **/home/ec2-user/app/**
+
+
+This directory contains the full frontend and backend code for the web application.
+
+---
+
+## Web Application URLs
+
+If accessible through the course web server, the application can be viewed at: http://ec2-52-20-203-80.compute-1.amazonaws.com:3015/index.html
+
+
+and the match submission page: http://ec2-52-20-203-80.compute-1.amazonaws.com:3015/match.html
+
+If these URLs are not externally reachable, all application code and configuration details are included in this repository and in the server directories listed above.
+
+---
+
+## Additional Notes
+
+- Logs for the Kafka streaming job are included in the root of the repository.
+- The folder `grlewis_battle_events/` contains the Spark Streaming JAR and related files used for ingesting match events.
+
 # Clash Royale Card Analytics System
 
 **Clash Royale** is a mobile strategy game where two players battle using decks of 8 cards.  
