@@ -12,6 +12,95 @@ This project analyzes real match data from **Season 18** to:
 - Recommend strong deck combinations
 - Simulate new match submissions through a streaming pipeline
 
+## APP Images
+
+Below are screenshots of the Clash Royale Analytics Web Application:
+
+| | |
+|---|---|
+| **App Screenshot 1** | **App Screenshot 2** |
+| <img src="app_0.png" width="400"/> | <img src="app_1.png" width="400"/> |
+| **App Screenshot 3** | **App Screenshot 4** |
+| <img src="app_2.png" width="400"/> | <img src="app_3.png" width="400"/> |
+
+---
+
+## Logs Included
+
+A full log output is included in:
+
+```text
+Here are logs of the request for card statistics:
+
+Kafka connection established.
+GET /stats.html { card_id: '26000012' }
+Fetching stats for card: 26000012
+Stats found. Processing relationships...
+Fetching secondary card: 26000017
+Fetching secondary card: 26000011
+Fetching secondary card: 28000001
+Synergies processed.
+Fetching secondary card: 28000011
+Fetching secondary card: 28000008
+Fetching secondary card: 28000000
+Counters processed.
+Rendering stats page.
+
+
+Here are the logs of requests for deck summaries:
+
+Rendering stats page.
+GET /recommend.html { card_id: '26000012' }
+Fetching recommended deck for: 26000012
+Deck found. Rendering page.
+
+
+Manual upload to Kafka
+
+GET /submit-match {
+  matches: '20',
+  wins: '4',
+  player1: '26000006',
+  player2: '28000006',
+  player3: '26000000',
+  player4: '26000018',
+  player5: '26000001',
+  player6: '26000002',
+  player7: '26000010',
+  player8: '26000003',
+  opp1: '26000003',
+  opp2: '26000017',
+  opp3: '26000022',
+  opp4: '26000002',
+  opp5: '26000039',
+  opp6: '26000013',
+  opp7: '26000064',
+  opp8: '28000015'
+}
+Event constructed: {
+  timestamp: 1765414701723,
+  matches: 20,
+  wins: 4,
+  player_cards: [
+    26000006, 28000006,
+    26000000, 26000018,
+    26000001, 26000002,
+    26000010, 26000003
+  ],
+  opponent_cards: [
+    26000003, 26000017,
+    26000022, 26000002,
+    26000039, 26000013,
+    26000064, 28000015
+  ]
+}
+Sending event to Kafka...
+Kafka message sent successfully.
+
+```
+
+
+
 ## Data Source
 
 The raw battle data used in this project comes from a publicly available Kaggle dataset:

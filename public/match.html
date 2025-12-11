@@ -269,47 +269,79 @@
     <option value="28000018">Royal Delivery</option>
 </template>
 
-
 <script>
-    document.querySelector("form").addEventListener("submit", function (e) {
+    window.onload = function () {
 
-        const matches = Number(document.querySelector("input[name='matches']").value);
-        const wins = Number(document.querySelector("input[name='wins']").value);
+        // Populate selects once
+        const template = document.getElementById("card-options");
+        const optionsHTML = template.innerHTML;
 
-        if (matches < 0 || wins < 0) {
-            alert("Matches and wins cannot be negative.");
-            e.preventDefault();
-            return false;
+        document.querySelectorAll("select").forEach(sel => {
+            sel.innerHTML = optionsHTML;
+        });
+
+        // Form validation
+        document.querySelector("form").addEventListener("submit", function (e) {
+
+            const matches = Number(document.querySelector("input[name='matches']").value);
+            const wins = Number(document.querySelector("input[name='wins']").value);
+
+            if (matches < 0 || wins < 0) {
+                alert("Matches and wins cannot be negative.");
+                e.preventDefault();
+                return false;
+            }
+
+            if (matches === 0) {
+                alert("Total matches must be greater than zero.");
+                e.preventDefault();
+                return false;
+            }
+
+            if (wins > matches) {
+                alert("Wins cannot be greater than matches.");
+                e.preventDefault();
+                return false;
+            }
+
+            const selects = Array.from(document.querySelectorAll("select"));
+            const missing = selects.some(sel => sel.value === "" || sel.value === "0");
+
+            if (missing) {
+                alert("All 16 card slots must be filled before submitting the match.");
+                e.preventDefault();
+                return false;
+            }
+
+            // ----------- DUPLICATE CHECKING -----------
+            const playerCards = Array.from(document.querySelectorAll(".playerCard")).map(s => s.value);
+            const oppCards = Array.from(document.querySelectorAll(".oppCard")).map(s => s.value);
+
+            const hasDuplicates = arr => new Set(arr).size !== arr.length;
+
+            if (hasDuplicates(playerCards)) {
+                alert("Your deck contains duplicates. Each player must have 8 unique cards.");
+                e.preventDefault();
+                return false;
+            }
+
+            if (hasDuplicates(oppCards)) {
+                alert("Opponent deck contains duplicates. Each player must have 8 unique cards.");
+                e.preventDefault();
+                return false;
+            }
+            // -------------------------------------------
+
+        });
+
+        // Success message
+        const url = new URL(window.location.href);
+        if (url.searchParams.get("success") === "1") {
+            alert("Match successfully submitted!");
         }
-
-        if (matches === 0) {
-            alert("Total matches must be greater than zero.");
-            e.preventDefault();
-            return false;
-        }
-
-        if (wins > matches) {
-            alert("Wins cannot be greater than matches.");
-            e.preventDefault();
-            return false;
-        }
-
-        const selects = Array.from(document.querySelectorAll("select"));
-        const missing = selects.some(sel => sel.value === "" || sel.value === "0");
-
-        if (missing) {
-            alert("All 16 card slots must be filled before submitting the match.");
-            e.preventDefault();
-            return false;
-        }
-
-    });
-
-    const url = new URL(window.location.href);
-    if (url.searchParams.get("success") === "1") {
-        alert("Match successfully submitted!");
-    }
+    };
 </script>
+
 
 </body>
 </html>

@@ -9,9 +9,12 @@ require('dotenv').config();
 const hbase = require('hbase');
 const { Kafka } = require("kafkajs");
 
+console.log("Starting Clash Royale Analytics WebApp...");
+
 const port = Number(process.argv[2]);
 const url = new URL(process.argv[3]);
 
+console.log("Initializing HBase client...");
 const hclient = hbase({
     host: url.hostname,
     path: url.pathname ?? "/",
@@ -20,6 +23,7 @@ const hclient = hbase({
     encoding: 'latin1'
 });
 
+console.log("Loading card data...");
 const cardData = JSON.parse(
     filesystem.readFileSync("./data/cards.json").toString()
 );
@@ -43,11 +47,9 @@ function decodeNumber(c) {
 
 function rowToStats(cells) {
     const stats = {};
-
     cells.forEach(col => {
         const q = col.column;
         const val = col["$"];
-
         if (q.startsWith("stats:"))
             stats[q.replace("stats:", "")] = decodeNumber(val);
         else if (q.startsWith("rel:"))
@@ -55,20 +57,35 @@ function rowToStats(cells) {
         else
             stats[q] = decodeString(val);
     });
-
     return stats;
 }
 
+console.log("Setting static file directory: public/");
 app.use(express.static('public'));
 
 app.get('/stats.html', function (req, res) {
+    console.log("GET /stats.html", req.query);
+
     const cardId = req.query['card_id'];
-    if (!cardId) return res.send("<h2>No card ID provided!</h2>");
+    if (!cardId) {
+        console.log("Missing card_id");
+        return res.send("<h2>No card ID provided!</h2>");
+    }
+
+    console.log("Fetching stats for card:", cardId);
 
     hclient.table('grlewis_card_stats_hb').row(cardId).get(function (err, mainCells) {
-        if (err) return res.status(500).send("HBase read error.");
-        if (!mainCells || !Array.isArray(mainCells) || mainCells.length === 0)
+        if (err) {
+            console.log("HBase error on stats lookup:", err);
+            return res.status(500).send("HBase read error.");
+        }
+
+        if (!mainCells || !Array.isArray(mainCells) || mainCells.length === 0) {
+            console.log("No stats found for card:", cardId);
             return res.send(`<h2>No data found for card ${cardId}</h2>`);
+        }
+
+        console.log("Stats found. Processing relationships...");
 
         const info = rowToStats(mainCells);
 
@@ -85,6 +102,8 @@ app.get('/stats.html', function (req, res) {
         ].filter(Boolean);
 
         function fetchSecondaryCard(id, callback) {
+            console.log("Fetching secondary card:", id);
+
             hclient.table('grlewis_card_stats_hb').row(id).get(function (err, cells) {
                 if (err) return callback(err);
                 if (!cells || !Array.isArray(cells) || cells.length === 0)
@@ -115,7 +134,6 @@ app.get('/stats.html', function (req, res) {
         function fetchAll(list, finalCallback) {
             const results = [];
             let count = 0;
-
             if (list.length === 0) return finalCallback(null, []);
 
             list.forEach(id => {
@@ -128,7 +146,11 @@ app.get('/stats.html', function (req, res) {
         }
 
         fetchAll(synergyIDs, function (_, partners) {
+            console.log("Synergies processed.");
+
             fetchAll(counterIDs, function (_, opponents) {
+                console.log("Counters processed.");
+
                 const context = {
                     card_id: cardId,
                     card_name: CARD_NAME[cardId] || "Unknown Card",
@@ -142,6 +164,7 @@ app.get('/stats.html', function (req, res) {
                     .readFileSync("views/card_results.mustache")
                     .toString();
 
+                console.log("Rendering stats page.");
                 const html = mustache.render(template, context);
                 res.send(html);
             });
@@ -150,16 +173,29 @@ app.get('/stats.html', function (req, res) {
 });
 
 app.get("/recommend.html", function (req, res) {
+    console.log("GET /recommend.html", req.query);
+
     const cardId = req.query["card_id"];
-    if (!cardId) return res.send("<h2>No card ID provided!</h2>");
+    if (!cardId) {
+        console.log("Missing card_id");
+        return res.send("<h2>No card ID provided!</h2>");
+    }
+
+    console.log("Fetching recommended deck for:", cardId);
 
     hclient.table("grlewis_recommended_decks_hb")
         .row(cardId)
         .get(function (err, cells) {
 
-            if (err) return res.status(500).send("HBase read error.");
-            if (!cells || cells.length === 0)
+            if (err) {
+                console.log("HBase error:", err);
+                return res.status(500).send("HBase read error.");
+            }
+
+            if (!cells || cells.length === 0) {
+                console.log("No recommended deck found for:", cardId);
                 return res.send(`<h2>No recommended deck data for card ${cardId}</h2>`);
+            }
 
             let deck1 = [];
 
@@ -168,9 +204,12 @@ app.get("/recommend.html", function (req, res) {
                 try {
                     deck1 = JSON.parse(decodeString(raw));
                 } catch (e) {
+                    console.log("Failed to parse deck JSON");
                     deck1 = [];
                 }
             }
+
+            console.log("Deck found. Rendering page.");
 
             const context = {
                 card_id: cardId,
@@ -186,6 +225,8 @@ app.get("/recommend.html", function (req, res) {
             res.send(html);
         });
 });
+
+console.log("Initializing Kafka producer...");
 
 const kafka = new Kafka({
     clientId: "clash-producer",
@@ -204,15 +245,19 @@ const producer = kafka.producer();
 
 async function initKafka() {
     try {
+        console.log("Connecting to Kafka...");
         await producer.connect();
+        console.log("Kafka connection established.");
     } catch (err) {
-        console.error("Kafka connection error:", err);
+        console.log("Kafka connection error:", err);
     }
 }
 
 initKafka();
 
 app.get("/submit-match", async function (req, res) {
+    console.log("GET /submit-match", req.query);
+
     const event = {
         timestamp: Date.now(),
         matches: Number(req.query.matches),
@@ -227,14 +272,20 @@ app.get("/submit-match", async function (req, res) {
         ].map(Number)
     };
 
+    console.log("Event constructed:", event);
+
     try {
+        console.log("Sending event to Kafka...");
         await producer.send({
             topic: "grlewis_clash_events",
             messages: [{ value: JSON.stringify(event) }]
         });
 
-        res.redirect("/match.html");
+        console.log("Kafka message sent successfully.");
+        res.redirect("/match.html?success=1");
+
     } catch (err) {
+        console.log("Kafka send failed:", err);
         res.status(500).send("Failed to submit match.");
     }
 });
